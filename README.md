@@ -1,0 +1,23 @@
+# mustafa-installer
+
+Nuevo instalador, parecido a `setup.sh`, pero que ejecuta los instaladores de `titlan/mustafa`.
+
+## Archivo
+
+- `setup-mustafa.sh` — instalador principal. Baja los 8 instaladores desde `titlan/mustafa/main`, luego baja y corre `install/stunnel.sh` y `install/haproxy.sh` de ese mismo repo, libera el 443 parando sslh, y deja solo a HAProxy escuchando en 443 por SNI.
+
+## Uso
+
+En un VPS limpio, como root:
+
+```bash
+sudo bash setup-mustafa.sh
+```
+
+Pide 3 dominios: principal (V2Ray), SNI para V2Ray y SNI para SSH. Los dos SNI deben ser distintos y apuntar a la IP del VPS.
+
+## Limitaciones
+
+- Los 8 instaladores siguen bajando archivos de ayuda (menús, configs) desde `syapik96/aws`. Este setup solo cambia la fuente de los 8 principales, no es un fork 100% autónomo.
+- El certificado debe cubrir los dominios SNI (wildcard o SAN). El script intenta re-emitirlo con los 3 dominios.
+- No probado en un VPS limpio todavía.
