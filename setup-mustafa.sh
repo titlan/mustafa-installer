@@ -6,12 +6,14 @@
 # Que hace, en orden:
 #   1. Pide el dominio principal (para el certificado de V2Ray) y los dos
 #      dominios SNI de HAProxy (V2Ray y SSH, distintos entre si).
-#   2. Baja y corre 6 instaladores de titlan/mustafa/main (sin SSTP ni WireGuard):
-#      ssh-vpn, websocket, ssr, shadowsocksobfs, v2ray, ipsec
-#      Quitados a peticion de David: SSTP (sstp.sh) y WireGuard (wg.sh) no se
-#      bajan ni se corren. OpenVPN, Trojan y Webmin no tienen instalador
-#      propio, vienen dentro de ssh-vpn.sh / ins-vt.sh, asi que despues de
-#      instalar se paran y se deshabilitan (ver bloque "Servicios quitados").
+#   2. Baja y corre 3 instaladores de titlan/mustafa/main:
+#      ssh-vpn, websocket, v2ray
+#      Quitados a peticion de David: SSTP (sstp.sh), WireGuard (wg.sh),
+#      Shadowsocks-R (ssr.sh), Shadowsocks OBFS (shadowsocksobfs.sh) e
+#      IPsec (ipsec.sh) no se bajan ni se corren. OpenVPN, Trojan y Webmin
+#      no tienen instalador propio, vienen dentro de ssh-vpn.sh / ins-vt.sh,
+#      asi que despues de instalar se paran y se deshabilitan
+#      (ver bloque "Servicios quitados").
 #   3. Libera el 443: para y deshabilita sslh y el stunnel original de
 #      ssh-vpn.sh, que si no, ocupan el 443 y HAProxy no puede enlazarlo.
 #   4. Baja y corre install/stunnel.sh y install/haproxy.sh de titlan/mustafa.
@@ -20,9 +22,9 @@
 #        dominio SSH   -> Stunnel4 TLS 127.0.0.1:8444 -> SSH 127.0.0.1:22
 #
 # Limitaciones honestas, leelas antes de correrlo en un VPS:
-#   - Los 8 instaladores, una vez dentro, siguen bajando archivos de ayuda
+#   - Los 3 instaladores, una vez dentro, siguen bajando archivos de ayuda
 #     (menus, configs) desde syapik96/aws. Este setup solo cambia la fuente
-#     de los 8 instaladores principales, no es un fork 100% autonomo.
+#     de los 3 instaladores principales, no es un fork 100% autonomo.
 #   - El certificado lo emite ins-vt.sh (acme.sh) solo para el dominio
 #     principal. Si los dominios SNI son distintos, el certificado debe
 #     cubrirlos (wildcard o SAN con ambos), si no el cliente vera error
@@ -98,15 +100,12 @@ MustafaBase="https://raw.githubusercontent.com/${MustafaUser}/${MustafaRepo}/mai
 
 wget ${MustafaBase}/install/ssh-vpn.sh && chmod +x ssh-vpn.sh && screen -S ssh-vpn.sh ./ssh-vpn.sh
 wget ${MustafaBase}/websocket-python/websocket.sh && chmod +x websocket.sh && screen -S websocket.sh ./websocket.sh
-# SSTP y WireGuard quitados: no se bajan sstp.sh ni wg.sh
-wget ${MustafaBase}/install/ssr.sh && chmod +x ssr.sh && screen -S ssr.sh ./ssr.sh
-wget ${MustafaBase}/install/shadowsocksobfs.sh && chmod +x shadowsocksobfs.sh && screen -S shadowsocksobfs.sh ./shadowsocksobfs.sh
+# SSTP, WireGuard, Shadowsocks-R, Shadowsocks OBFS e IPsec quitados:
+# no se bajan sstp.sh, wg.sh, ssr.sh, shadowsocksobfs.sh ni ipsec.sh
 wget ${MustafaBase}/install/ins-vt.sh && chmod +x ins-vt.sh && sed -i -e 's/\r$//' /root/ins-vt.sh && screen -S v2ray.sh ./ins-vt.sh
-wget ${MustafaBase}/install/ipsec.sh && chmod +x ipsec.sh && screen -S ipsec.sh ./ipsec.sh
 
 # Remove script has installed
-rm -f /root/ssh-vpn.sh /root/websocket.sh
-rm -f /root/ssr.sh /root/shadowsocksobfs.sh /root/ins-vt.sh /root/ipsec.sh
+rm -f /root/ssh-vpn.sh /root/websocket.sh /root/ins-vt.sh
 
 # --- Servicios quitados a peticion de David ---
 # OpenVPN, Trojan y Webmin vienen dentro de ssh-vpn.sh / ins-vt.sh, no se
@@ -153,7 +152,7 @@ echo "   - V2RAY Vmess TLS SNI      : $v2ray_domain" | tee -a log-install.txt
 echo "   - Stunnel4 / SSH           : 443 via HAProxy -> 8444 interno -> SSH 22" | tee -a log-install.txt
 echo "   - Stunnel4 / SSH SNI       : $ssh_domain" | tee -a log-install.txt
 echo "   - V2RAY Vless TLS          : 2083" | tee -a log-install.txt
-echo "   - Quitados / desactivados  : OpenVPN, Trojan, WireGuard, SSTP, Webmin" | tee -a log-install.txt
+echo "   - Quitados / desactivados  : OpenVPN, Trojan, WireGuard, SSTP, Webmin, Shadowsocks-R, Shadowsocks OBFS, IPsec" | tee -a log-install.txt
 echo "" | tee -a log-install.txt
 echo "   - Fuente de instaladores   : titlan/mustafa" | tee -a log-install.txt
 echo "   - Installation Log --> /root/log-install.txt" | tee -a log-install.txt
