@@ -6,8 +6,12 @@
 # Que hace, en orden:
 #   1. Pide el dominio principal (para el certificado de V2Ray) y los dos
 #      dominios SNI de HAProxy (V2Ray y SSH, distintos entre si).
-#   2. Baja y corre los 8 instaladores de titlan/mustafa/main:
-#      ssh-vpn, websocket, sstp, wireguard, ssr, shadowsocksobfs, v2ray, ipsec
+#   2. Baja y corre 6 instaladores de titlan/mustafa/main (sin SSTP ni WireGuard):
+#      ssh-vpn, websocket, ssr, shadowsocksobfs, v2ray, ipsec
+#      Quitados a peticion de David: SSTP (sstp.sh) y WireGuard (wg.sh) no se
+#      bajan ni se corren. OpenVPN, Trojan y Webmin no tienen instalador
+#      propio, vienen dentro de ssh-vpn.sh / ins-vt.sh, asi que despues de
+#      instalar se paran y se deshabilitan (ver bloque "Servicios quitados").
 #   3. Libera el 443: para y deshabilita sslh y el stunnel original de
 #      ssh-vpn.sh, que si no, ocupan el 443 y HAProxy no puede enlazarlo.
 #   4. Baja y corre install/stunnel.sh y install/haproxy.sh de titlan/mustafa.
@@ -94,16 +98,29 @@ MustafaBase="https://raw.githubusercontent.com/${MustafaUser}/${MustafaRepo}/mai
 
 wget ${MustafaBase}/install/ssh-vpn.sh && chmod +x ssh-vpn.sh && screen -S ssh-vpn.sh ./ssh-vpn.sh
 wget ${MustafaBase}/websocket-python/websocket.sh && chmod +x websocket.sh && screen -S websocket.sh ./websocket.sh
-wget ${MustafaBase}/install/sstp.sh && chmod +x sstp.sh && screen -S sstp.sh ./sstp.sh
-wget ${MustafaBase}/install/wg.sh && chmod +x wg.sh && screen -S wg.sh ./wg.sh
+# SSTP y WireGuard quitados: no se bajan sstp.sh ni wg.sh
 wget ${MustafaBase}/install/ssr.sh && chmod +x ssr.sh && screen -S ssr.sh ./ssr.sh
 wget ${MustafaBase}/install/shadowsocksobfs.sh && chmod +x shadowsocksobfs.sh && screen -S shadowsocksobfs.sh ./shadowsocksobfs.sh
 wget ${MustafaBase}/install/ins-vt.sh && chmod +x ins-vt.sh && sed -i -e 's/\r$//' /root/ins-vt.sh && screen -S v2ray.sh ./ins-vt.sh
 wget ${MustafaBase}/install/ipsec.sh && chmod +x ipsec.sh && screen -S ipsec.sh ./ipsec.sh
 
 # Remove script has installed
-rm -f /root/ssh-vpn.sh /root/websocket.sh /root/sstp.sh /root/wg.sh
+rm -f /root/ssh-vpn.sh /root/websocket.sh
 rm -f /root/ssr.sh /root/shadowsocksobfs.sh /root/ins-vt.sh /root/ipsec.sh
+
+# --- Servicios quitados a peticion de David ---
+# OpenVPN, Trojan y Webmin vienen dentro de ssh-vpn.sh / ins-vt.sh, no se
+# pueden evitar solo quitando un archivo, asi que se paran y deshabilitan.
+echo -e "${yellow}Desactivando OpenVPN, Trojan y Webmin (no los usas)...${NC}"
+systemctl stop openvpn 2>/dev/null || true
+systemctl disable openvpn 2>/dev/null || true
+systemctl stop openvpn@server 2>/dev/null || true
+systemctl disable openvpn@server 2>/dev/null || true
+systemctl stop trojan 2>/dev/null || true
+systemctl disable trojan 2>/dev/null || true
+systemctl stop webmin 2>/dev/null || true
+systemctl disable webmin 2>/dev/null || true
+/etc/init.d/webmin stop 2>/dev/null || true
 
 history -c
 echo "2.1" >> /home/ver
@@ -136,7 +153,7 @@ echo "   - V2RAY Vmess TLS SNI      : $v2ray_domain" | tee -a log-install.txt
 echo "   - Stunnel4 / SSH           : 443 via HAProxy -> 8444 interno -> SSH 22" | tee -a log-install.txt
 echo "   - Stunnel4 / SSH SNI       : $ssh_domain" | tee -a log-install.txt
 echo "   - V2RAY Vless TLS          : 2083" | tee -a log-install.txt
-echo "   - Trojan Go                : 2087" | tee -a log-install.txt
+echo "   - Quitados / desactivados  : OpenVPN, Trojan, WireGuard, SSTP, Webmin" | tee -a log-install.txt
 echo "" | tee -a log-install.txt
 echo "   - Fuente de instaladores   : titlan/mustafa" | tee -a log-install.txt
 echo "   - Installation Log --> /root/log-install.txt" | tee -a log-install.txt
